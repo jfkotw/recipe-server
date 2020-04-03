@@ -28,12 +28,12 @@ public class RecipeController implements RecipesApi {
         Recipe rec1 = new Recipe();
         rec1.setId(1L);
         rec1.setName("custard pie");
-        rec1.setTag("dessert");
+        rec1.setTags(List.of("dessert", "tasty"));
 
         Recipe rec2 = new Recipe();
         rec2.setId(2L);
         rec2.setName("spaghetti bolognese");
-        rec2.setTag("main");
+        rec2.setTags(List.of("main"));
 
         return ResponseEntity.ok(List.of(rec1, rec2));
     }
@@ -43,7 +43,7 @@ public class RecipeController implements RecipesApi {
         Recipe rec = new Recipe();
         rec.setId(2L);
         rec.setName("spaghetti bolognese");
-        rec.setTag("main");
+        rec.setTags(List.of("main"));
 
         return ResponseEntity.ok(rec);
     }

@@ -1,7 +1,7 @@
 plugins {
     id 'org.springframework.boot' version '2.2.0.RELEASE'
     id 'io.spring.dependency-management' version '1.0.8.RELEASE'
-    id "org.openapi.generator" version "4.1.1"
+    id "org.openapi.generator" version "4.3.0"
     id 'java'
 }
 
@@ -44,6 +44,10 @@ dependencies {
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+
+    implementation platform('software.amazon.awssdk:bom:2.11.4')
+
+    implementation 'software.amazon.awssdk:dynamodb'
 }
 
 test {
