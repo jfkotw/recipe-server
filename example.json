@@ -1,0 +1,26 @@
+{
+  "id": 1,
+  "name": "hot cross buns",
+  "ingredients": [
+    {
+      "id": 0,
+      "name": "eggs",
+      "amount": 1,
+      "unit": "egg"
+    },{
+      "id": 1,
+      "name": "flour",
+      "amount": 200,
+      "unit": "grams"
+    }
+  ],
+  "method": {
+    "id": 0,
+    "method": "Make the hot cross buns.",
+    "temperature": 200
+  },
+  "tags": [
+    "easter", "baking"
+  ],
+  "image": "https://example.com/image.png"
+}
