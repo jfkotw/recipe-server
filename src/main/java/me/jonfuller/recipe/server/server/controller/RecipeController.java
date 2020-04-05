@@ -11,17 +11,10 @@ import org.springframework.web.context.request.NativeWebRequest;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.BatchGetItemRequest;
-import software.amazon.awssdk.services.dynamodb.model.ScanRequest;
-import software.amazon.awssdk.services.dynamodb.model.ScanResponse;
+import software.amazon.awssdk.services.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.paginators.ScanIterable;
-import software.amazon.awssdk.services.dynamodb.transform.BatchGetItemRequestMarshaller;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 public class RecipeController implements RecipesApi {
@@ -48,11 +41,6 @@ public class RecipeController implements RecipesApi {
     @Override
     public ResponseEntity<List<Recipe>> listRecipes(@Valid Integer limit) {
 
-
-//        BatchGetItemRequest batchReq = BatchGetItemRequest.builder()
-//                .requestItems()
-//                .build();
-
         ScanRequest request = ScanRequest.builder()
                 .tableName(tableName)
                 .build();
@@ -61,50 +49,13 @@ public class RecipeController implements RecipesApi {
 
         ArrayList<Recipe> recipes = new ArrayList<>();
 
-
         for (ScanResponse page : response) {
             System.out.println(page.toString());
 
             for (Map<String, AttributeValue> item : page.items()) {
                 System.out.println(item);
 
-                // Map response to Recipe object.
-                Recipe recipe = new Recipe();
-                recipe.setId(Long.parseLong(item.get("id").n()));
-                recipe.setName(item.get("name").s());
-
-                List<Ingredient> ingredientList = new ArrayList<>();
-                for(AttributeValue ing : item.get("ingredients").l()) {
-//                    System.out.println(ing.toString());
-                    Ingredient ingredient = new Ingredient();
-                    ingredient.setId(Long.parseLong(ing.m().get("id").n()));
-                    ingredient.setName(ing.m().get("name").s());
-                    ingredient.setAmount(Float.parseFloat(ing.m().get("amount").n()));
-                    ingredient.setUnit(ing.m().get("unit").s());
-                    ingredientList.add(ingredient);
-                }
-                recipe.setIngredients(ingredientList);
-
-//                List<Method> methodList = new ArrayList<>();
-                for(AttributeValue met : item.get("method").l()) {
-//                    System.out.println(ing.toString());
-                    Method method = new Method();
-                    method.setId(Long.parseLong(met.m().get("id").n()));
-                    method.setMethod(met.m().get("method").s());
-                    method.setTemperature(Integer.parseInt(met.m().get("temperature").n()));
-                    recipe.setMethod(method);
-//                    methodList.add(method);
-                }
-
-                List<String> tagList = new ArrayList<>();
-                for(AttributeValue ing : item.get("tags").l()) {
-//                    System.out.println(ing.toString());
-                    tagList.add(ing.s());
-
-                }
-                recipe.setIngredients(ingredientList);
-                recipe.setTags(tagList);
-                recipe.setImage(item.get("image").s());
+                Recipe recipe = queryToRecipe(item);
 
                 recipes.add(recipe);
             }
@@ -113,13 +64,64 @@ public class RecipeController implements RecipesApi {
         return ResponseEntity.ok(recipes);
     }
 
+    /**
+     * Map a dynamodb response to a Recipe object.
+     * @param item dynamodb recipe item
+     * @return a recipe
+     */
+    private Recipe queryToRecipe(Map<String, AttributeValue> item) {
+        Recipe recipe = new Recipe();
+
+        recipe.setId(Long.parseLong(item.get("id").n()));
+
+        recipe.setName(item.get("name").s());
+
+        List<Ingredient> ingredientList = new ArrayList<>();
+        for(AttributeValue ing : item.get("ingredients").l()) {
+            Ingredient ingredient = new Ingredient();
+            ingredient.setId(Long.parseLong(ing.m().get("id").n()));
+            ingredient.setName(ing.m().get("name").s());
+            ingredient.setAmount(Float.parseFloat(ing.m().get("amount").n()));
+            ingredient.setUnit(ing.m().get("unit").s());
+            ingredientList.add(ingredient);
+        }
+        recipe.setIngredients(ingredientList);
+
+        for(AttributeValue met : item.get("method").l()) {
+            Method method = new Method();
+            method.setId(Long.parseLong(met.m().get("id").n()));
+            method.setMethod(met.m().get("method").s());
+            method.setTemperature(Integer.parseInt(met.m().get("temperature").n()));
+            recipe.setMethod(method);
+        }
+
+        List<String> tagList = new ArrayList<>();
+        for(AttributeValue ing : item.get("tags").l()) {
+            tagList.add(ing.s());
+        }
+        recipe.setIngredients(ingredientList);
+
+        recipe.setTags(tagList);
+
+        recipe.setImage(item.get("image").s());
+
+        return recipe;
+    }
+
     @Override
     public ResponseEntity<Recipe> showRecipeById(String recipeId) {
-        Recipe rec = new Recipe();
-        rec.setId(2L);
-        rec.setName("spaghetti bolognese");
-        rec.setTags(List.of("main"));
+        HashMap<String,AttributeValue> keyToGet = new HashMap<>();
 
-        return ResponseEntity.ok(rec);
+        keyToGet.put("id", AttributeValue.builder()
+                .n(recipeId).build());
+
+        GetItemRequest req = GetItemRequest.builder()
+                .key(keyToGet)
+                .tableName("recipes")
+                .build();
+
+        Map<String,AttributeValue> returnedItem = client.getItem(req).item();
+
+        return ResponseEntity.ok(queryToRecipe(returnedItem));
     }
 }
