@@ -1,6 +1,8 @@
 package me.jonfuller.recipe.server.server.controller;
 
 import me.jonfuller.recipe.api.RecipesApi;
+import me.jonfuller.recipe.api.model.Ingredient;
+import me.jonfuller.recipe.api.model.Method;
 import me.jonfuller.recipe.api.model.Recipe;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +16,7 @@ import software.amazon.awssdk.services.dynamodb.model.BatchGetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest;
 import software.amazon.awssdk.services.dynamodb.model.ScanResponse;
 import software.amazon.awssdk.services.dynamodb.paginators.ScanIterable;
-
+import software.amazon.awssdk.services.dynamodb.transform.BatchGetItemRequestMarshaller;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +29,16 @@ public class RecipeController implements RecipesApi {
 //    public Optional<NativeWebRequest> getRequest() {
 //        return Optional.empty();
 //    }
-    private final Region region = Region.EU_WEST_1;
-    private final String profileName = "default";
-    private final String tableName = "recipes";
+    private static final Region region = Region.EU_WEST_1;
+    private static final String profileName = "default";
+    private static final String tableName = "recipes";
+
+    private static DynamoDbClient client = DynamoDbClient.builder()
+            .region(region)
+            .credentialsProvider(ProfileCredentialsProvider.builder()
+                    .profileName(profileName)
+                    .build())
+            .build();
 
     @Override
     public ResponseEntity<Void> createRecipes() {
@@ -38,12 +47,7 @@ public class RecipeController implements RecipesApi {
 
     @Override
     public ResponseEntity<List<Recipe>> listRecipes(@Valid Integer limit) {
-        DynamoDbClient client = DynamoDbClient.builder()
-                .region(region)
-                .credentialsProvider(ProfileCredentialsProvider.builder()
-                        .profileName(profileName)
-                        .build())
-                .build();
+
 
 //        BatchGetItemRequest batchReq = BatchGetItemRequest.builder()
 //                .requestItems()
@@ -57,6 +61,7 @@ public class RecipeController implements RecipesApi {
 
         ArrayList<Recipe> recipes = new ArrayList<>();
 
+
         for (ScanResponse page : response) {
             System.out.println(page.toString());
 
@@ -68,19 +73,42 @@ public class RecipeController implements RecipesApi {
                 recipe.setId(Long.parseLong(item.get("id").n()));
                 recipe.setName(item.get("name").s());
 
+                List<Ingredient> ingredientList = new ArrayList<>();
+                for(AttributeValue ing : item.get("ingredients").l()) {
+//                    System.out.println(ing.toString());
+                    Ingredient ingredient = new Ingredient();
+                    ingredient.setId(Long.parseLong(ing.m().get("id").n()));
+                    ingredient.setName(ing.m().get("name").s());
+                    ingredient.setAmount(Float.parseFloat(ing.m().get("amount").n()));
+                    ingredient.setUnit(ing.m().get("unit").s());
+                    ingredientList.add(ingredient);
+                }
+                recipe.setIngredients(ingredientList);
+
+//                List<Method> methodList = new ArrayList<>();
+                for(AttributeValue met : item.get("method").l()) {
+//                    System.out.println(ing.toString());
+                    Method method = new Method();
+                    method.setId(Long.parseLong(met.m().get("id").n()));
+                    method.setMethod(met.m().get("method").s());
+                    method.setTemperature(Integer.parseInt(met.m().get("temperature").n()));
+                    recipe.setMethod(method);
+//                    methodList.add(method);
+                }
+
+                List<String> tagList = new ArrayList<>();
+                for(AttributeValue ing : item.get("tags").l()) {
+//                    System.out.println(ing.toString());
+                    tagList.add(ing.s());
+
+                }
+                recipe.setIngredients(ingredientList);
+                recipe.setTags(tagList);
+                recipe.setImage(item.get("image").s());
+
                 recipes.add(recipe);
             }
         }
-
-//        Recipe rec1 = new Recipe();
-//        rec1.setId(1L);
-//        rec1.setName("custard pie");
-//        rec1.setTags(List.of("dessert", "tasty"));
-//
-//        Recipe rec2 = new Recipe();
-//        rec2.setId(2L);
-//        rec2.setName("spaghetti bolognese");
-//        rec2.setTags(List.of("main"));
 
         return ResponseEntity.ok(recipes);
     }
