@@ -34,8 +34,31 @@ public class RecipeController implements RecipesApi {
             .build();
 
     @Override
-    public ResponseEntity<Void> createRecipes() {
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<Void> createRecipes(Recipe recipe) {
+        HashMap<String,AttributeValue> itemValues;
+
+        // Add content to the table
+        itemValues = recipeToQuery(recipe);
+
+        // Create a PutItemRequest object
+        PutItemRequest request = PutItemRequest.builder()
+                .tableName(tableName)
+                .item(itemValues)
+                .build();
+
+        try {
+            client.putItem(request);
+            System.out.println(tableName +" was successfully updated");
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        } catch (ResourceNotFoundException e) {
+            System.err.format("Error: The table \"%s\" can't be found.\n", tableName);
+            System.err.println("Be sure that it exists and that you've typed its name correctly!");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (DynamoDbException e) {
+            System.err.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build();
+        }
+
     }
 
     @Override
@@ -64,6 +87,42 @@ public class RecipeController implements RecipesApi {
         return ResponseEntity.ok(recipes);
     }
 
+    /**
+     * Map a Recipe to a dynamodb item
+     *
+     */
+    private HashMap<String, AttributeValue> recipeToQuery(Recipe recipe) {
+        HashMap<String, AttributeValue> item = new HashMap<>();
+
+        item.put("id", AttributeValue.builder().n(recipe.getId().toString()).build());
+
+        item.put("name", AttributeValue.builder().s(recipe.getName()).build());
+
+        //ingredients
+        //TODO: Implement ingredients.
+        //method
+        HashMap<String, AttributeValue> methodMap = new HashMap<>();
+        methodMap.put("id", AttributeValue.builder().n(recipe.getMethod().getId().toString()).build());
+        methodMap.put("method", AttributeValue.builder().s(recipe.getMethod().getMethod()).build());
+        methodMap.put("temperature", AttributeValue.builder().n(recipe.getMethod().getTemperature().toString()).build());
+        item.put("method", AttributeValue.builder().m(methodMap).build());
+//        List<String> tagList = new ArrayList<>();
+//        for(AttributeValue ing : item.get("tags").l()) {
+//            tagList.add(ing.s());
+//        }
+
+        // TODO: Implement so it will add all tags.
+//        List<AttributeValue> tagList = new ArrayList<>();
+//
+//        for (String tag : recipe.getTags()) {
+//            tagList.add(AttributeValue.builde("tags", tag).build());
+//        }
+//        item.put("tags", AttributeValue.builder().l(AttributeValue.builder().l(tagMap).build()).build());
+
+        item.put("image", AttributeValue.builder().s(recipe.getImage()).build());
+
+        return item;
+    }
     /**
      * Map a dynamodb response to a Recipe object.
      * @param item dynamodb recipe item
@@ -99,8 +158,6 @@ public class RecipeController implements RecipesApi {
         for(AttributeValue ing : item.get("tags").l()) {
             tagList.add(ing.s());
         }
-        recipe.setIngredients(ingredientList);
-
         recipe.setTags(tagList);
 
         recipe.setImage(item.get("image").s());

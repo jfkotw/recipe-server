@@ -44,6 +44,15 @@ paths:
     post:
       summary: Create a recipe
       operationId: createRecipes
+
+      requestBody:
+        description: The recipe that you want to create
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Recipe'
+
       tags:
         - recipes
       responses:
@@ -51,6 +60,10 @@ paths:
           description: Null response
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '418':
+          description: I am a teapot
+        '500':
+          $ref: "#/components/schemas/Error"
         default:
           description: unexpected error
           content:
