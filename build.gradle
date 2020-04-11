@@ -30,9 +30,22 @@ ext {
 }
 
 dependencies {
+    implementation('org.springframework.boot:spring-boot-starter-web:2.2.6.RELEASE') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    }
+
+    implementation 'com.amazonaws.serverless:aws-serverless-java-container-springboot2:1.5'
+    implementation 'io.symphonia:lambda-logging:1.0.1'
+
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.openapitools:jackson-databind-nullable:0.2.0'
+
+    implementation platform('software.amazon.awssdk:bom:2.11.4')
+
+    implementation 'software.amazon.awssdk:dynamodb'
+    implementation 'software.amazon.awssdk:lambda'
+    implementation 'software.amazon.awssdk:url-connection-client'
 
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -45,9 +58,12 @@ dependencies {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
 
-    implementation platform('software.amazon.awssdk:bom:2.11.4')
 
-    implementation 'software.amazon.awssdk:dynamodb'
+//    implementation 'com.amazonaws:aws-lambda-java-core:1.2.0'
+//    implementation 'com.amazonaws:aws-lambda-java-events:2.2.7'
+//    runtimeOnly 'com.amazonaws:aws-lambda-java-log4j2:1.1.0'
+
+
 }
 
 test {
@@ -86,6 +102,17 @@ task buildRecipeServerCode(type: org.openapitools.generator.gradle.plugin.tasks.
 // code will be generated during compilation
 compileJava.dependsOn(buildRecipeServerCode)
 
+task buildZip(type: Zip) {
+    from compileJava
+    from processResources
+    into('lib') {
+        from(configurations.compileClasspath) {
+            exclude 'tomcat-embed-*'
+        }
+    }
+}
+
+build.dependsOn buildZip
 
 // attach the generated folder as source for this project
 sourceSets {

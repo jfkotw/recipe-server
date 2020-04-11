@@ -7,8 +7,9 @@ import me.jonfuller.recipe.api.model.Recipe;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.NativeWebRequest;
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+//import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
@@ -17,6 +18,7 @@ import javax.validation.Valid;
 import java.util.*;
 
 @RestController
+@EnableWebMvc
 public class RecipeController implements RecipesApi {
 //    @Override
 //    public Optional<NativeWebRequest> getRequest() {
@@ -27,10 +29,11 @@ public class RecipeController implements RecipesApi {
     private static final String tableName = "recipes";
 
     private static DynamoDbClient client = DynamoDbClient.builder()
+            .httpClientBuilder(UrlConnectionHttpClient.builder())
             .region(region)
-            .credentialsProvider(ProfileCredentialsProvider.builder()
-                    .profileName(profileName)
-                    .build())
+//            .credentialsProvider(ProfileCredentialsProvider.builder()
+//                    .profileName(profileName)
+//                    .build())
             .build();
 
     @Override
