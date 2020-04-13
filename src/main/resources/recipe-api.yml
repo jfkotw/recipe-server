@@ -94,6 +94,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           description:  A recipe with the specified ID was not found.
+        '500':
+          description: Some server issue.
         default:
           description: unexpected error
           content:
@@ -134,6 +136,8 @@ components:
           items:
             type: string
         image:
+          type: string
+        originalURL:
           type: string
     Recipes:
       type: array

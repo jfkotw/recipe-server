@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.server.ResponseStatusException;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -177,8 +178,21 @@ public class RecipeController implements RecipesApi {
                 .tableName("recipes")
                 .build();
 
-        Map<String,AttributeValue> returnedItem = client.getItem(req).item();
+        try {
+            Map<String,AttributeValue> returnedItem = client.getItem(req).item();
 
-        return ResponseEntity.ok(queryToRecipe(returnedItem));
+            if(returnedItem != null) {
+                return ResponseEntity.ok(queryToRecipe(returnedItem));
+
+            } else {
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "No recipe with ID: "+recipeId
+                );
+            }
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Ooops"
+            );
+        }
     }
 }
