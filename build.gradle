@@ -3,6 +3,7 @@ plugins {
     id 'io.spring.dependency-management' version '1.0.8.RELEASE'
     id "org.openapi.generator" version "4.3.0"
     id 'java'
+    id 'idea'
 }
 
 group 'me.jonfuller.recipe'
@@ -50,6 +51,7 @@ dependencies {
     implementation platform('software.amazon.awssdk:bom:2.11.4')
 
     implementation 'software.amazon.awssdk:dynamodb'
+    implementation 'software.amazon.awssdk:s3'
 }
 
 test {

@@ -22,5 +22,6 @@
   "tags": [
     "easter", "baking"
   ],
-  "image": "https://example.com/image.png"
+  "imageKey": "image.png",
+  "originalURL": "https://www.example.com/recipe"
 }

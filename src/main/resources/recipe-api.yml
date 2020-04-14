@@ -102,6 +102,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /recipes/{recipeId}/images:
+    get:
+      summary: Images for a specific recipe
+      operationId: showRecipeImage
+      tags:
+        - recipes
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          description: The id of the recipe to retrieve the image for
+          schema:
+            type: string
+      responses:
+        '301':
+          description: Expected response to a valid request (redirect to file in S3)
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description:  A recipe with the specified ID was not found.
+        '500':
+          description: Some server issue.
 components:
   responses:
     Unauthorized:
@@ -135,7 +162,7 @@ components:
           type: array
           items:
             type: string
-        image:
+        imageKey:
           type: string
         originalURL:
           type: string
