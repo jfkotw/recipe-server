@@ -183,6 +183,10 @@ components:
           format: float
         unit:
           type: string
+        optional:
+          type: boolean
+        part:
+          type: string
     Method:
       type: object
       properties:
@@ -194,6 +198,17 @@ components:
         temperature:
           type: integer
           format: int32
+          nullable: true
+        prepTime:
+          type: integer
+          format: int32
+        cookingTime:
+          type: integer
+          format: int32
+        serves:
+          type: integer
+          format: int32
+        copyright: "Jon Fuller"
     Tag:
       type: string
     Error:
